@@ -43,6 +43,11 @@ public class TeleopPrevious extends LinearOpMode {
         // Configure score motor for position control
         scoreMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
 
+        // Set drive motors to run using encoders for field-centric mode
+        frontLeftMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        backLeftMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        frontRightMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        backRightMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
 
         IMU imu = hardwareMap.get(IMU.class, "imu");
         IMU.Parameters parameters = new IMU.Parameters(new RevHubOrientationOnRobot(
@@ -158,5 +163,4 @@ public class TeleopPrevious extends LinearOpMode {
 
         androidSoundPool.close();
     }
-
 }
