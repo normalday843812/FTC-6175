@@ -91,6 +91,7 @@ public class RobotHardware {
         // Set back to RUN_USING_ENCODER mode
         scoreMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
     }
+
     public void setDrivePowers(double fl, double bl, double fr, double br) {
         frontLeftMotor.setPower(fl);
         backLeftMotor.setPower(bl);
