@@ -31,41 +31,6 @@ public class AutoPrevious extends LinearOpMode {
         sleep(500);
 
         stopDriving();
-
-
-//        // Drive forward for 1 second
-//        telemetry.addData("Status", "Driving Forward");
-//        telemetry.update();
-//        driveForward();
-//        sleep(1000);
-//
-//        // Stop briefly
-//        stopDriving();
-//        sleep(50);
-//
-//        // Strafe left for 1 second
-//        telemetry.addData("Status", "Strafing Left");
-//        telemetry.update();
-//        driveLeft();
-//        sleep(1000);
-//
-//        // Stop
-//        stopDriving();
-//        telemetry.addData("Status", "Complete");
-//        telemetry.update();
-    }
-
-    private void driveForward() {
-        frontLeft.setPower(1.0);
-        backLeft.setPower(1.0);
-        frontRight.setPower(1.0);
-        backRight.setPower(1.0);
-    }
-    private void driveBackward() {
-        frontLeft.setPower(-1.0);
-        backLeft.setPower(-1.0);
-        frontRight.setPower(-1.0);
-        backRight.setPower(-1.0);
     }
 
     private void stopDriving() {
@@ -81,12 +46,5 @@ public class AutoPrevious extends LinearOpMode {
         backLeft.setPower(1.0);
         frontRight.setPower(1.0);
         backRight.setPower(-1.0);
-    }
-    private void driveRight() {
-        // Correct power values for mecanum wheel strafing
-        frontLeft.setPower(1.0);
-        backLeft.setPower(-1.0);
-        frontRight.setPower(-1.0);
-        backRight.setPower(1.0);
     }
 }

@@ -1,4 +1,4 @@
-package org.firstinspires.ftc.teamcode.previous;
+package org.firstinspires.ftc.teamcode.test;
 
 import android.annotation.SuppressLint;
 
@@ -6,7 +6,7 @@ import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 
 @TeleOp(name="ControllerTest", group="Test")
-public class ControllerTestPrevious extends LinearOpMode {
+public class ControllerTest extends LinearOpMode {
 
     @SuppressLint("DefaultLocale")
     @Override

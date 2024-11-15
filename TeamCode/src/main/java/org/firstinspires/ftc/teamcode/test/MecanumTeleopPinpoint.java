@@ -1,4 +1,4 @@
-package org.firstinspires.ftc.teamcode.previous;
+package org.firstinspires.ftc.teamcode.test;
 
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
@@ -9,14 +9,12 @@ import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.Pose2D;
 
-import org.firstinspires.ftc.teamcode.roadrunnerpkg.GoBildaPinpointDriver;
+import org.firstinspires.ftc.teamcode.GoBildaPinpointDriver;
 
 /**
  * MecanumTeleopPinpoint
- *
  * This TeleOp mode allows control of a mecanum-wheeled robot while displaying telemetry data
  * from the goBILDA® Pinpoint Odometry Computer.
- *
  * Ensure that:
  * - The motors are correctly mapped in the Robot Configuration.
  * - The Pinpoint device is named "pinpoint" in the Robot Configuration.
@@ -26,12 +24,6 @@ import org.firstinspires.ftc.teamcode.roadrunnerpkg.GoBildaPinpointDriver;
 @TeleOp(name="Mecanum Teleop with Pinpoint", group="TeleOp")
 public class MecanumTeleopPinpoint extends LinearOpMode {
 
-    // Declare motor variables
-    private DcMotor frontLeftMotor;
-    private DcMotor backLeftMotor;
-    private DcMotor frontRightMotor;
-    private DcMotor backRightMotor;
-
     // Declare Pinpoint driver
     private GoBildaPinpointDriver pinpoint;
 
@@ -39,10 +31,11 @@ public class MecanumTeleopPinpoint extends LinearOpMode {
     public void runOpMode() throws InterruptedException {
 
         // Initialize motors from hardware map
-        frontLeftMotor  = hardwareMap.get(DcMotor.class, "frontLeftMotor");
-        backLeftMotor   = hardwareMap.get(DcMotor.class, "backLeftMotor");
-        frontRightMotor = hardwareMap.get(DcMotor.class, "frontRightMotor");
-        backRightMotor  = hardwareMap.get(DcMotor.class, "backRightMotor");
+        // Declare motor variables
+        DcMotor frontLeftMotor = hardwareMap.get(DcMotor.class, "frontLeftMotor");
+        DcMotor backLeftMotor = hardwareMap.get(DcMotor.class, "backLeftMotor");
+        DcMotor frontRightMotor = hardwareMap.get(DcMotor.class, "frontRightMotor");
+        DcMotor backRightMotor = hardwareMap.get(DcMotor.class, "backRightMotor");
 
         // Reverse right side motors to ensure correct orientation
         frontRightMotor.setDirection(DcMotorSimple.Direction.REVERSE);
@@ -57,7 +50,7 @@ public class MecanumTeleopPinpoint extends LinearOpMode {
 
             // Set up the Pinpoint device as needed
             pinpoint.setEncoderDirections(
-                    GoBildaPinpointDriver.EncoderDirection.FORWARD,  // X encoder (forward/back)
+                    GoBildaPinpointDriver.EncoderDirection.REVERSED,  // X encoder (forward/back)
                     GoBildaPinpointDriver.EncoderDirection.FORWARD   // Y encoder (left/right)
             );
 
