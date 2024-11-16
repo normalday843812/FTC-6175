@@ -5,10 +5,13 @@ import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 
+import org.firstinspires.ftc.teamcode.GoBildaPinpointDriver;
 
-@TeleOp(name="Stripped down teleop", group="Linear Opmode")
+
+@TeleOp(name="Use this one if the other doesn't work", group="Linear Opmode")
 
 public class MecanumTeleOp extends LinearOpMode {
+
     @Override
     public void runOpMode() {
         DcMotor frontLeftMotor = hardwareMap.dcMotor.get("frontLeftMotor");

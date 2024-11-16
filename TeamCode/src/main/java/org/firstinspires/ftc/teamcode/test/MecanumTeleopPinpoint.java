@@ -15,10 +15,9 @@ import org.firstinspires.ftc.robotcore.external.navigation.Pose2D;
 
 import org.firstinspires.ftc.teamcode.GoBildaPinpointDriver;
 
-@TeleOp(name="New Teleop", group="TeleOp")
+@TeleOp(name="COMP TELEOP CHOOSE THIS ONE", group="TeleOp")
 public class MecanumTeleopPinpoint extends LinearOpMode {
 
-    // Drive mode constants
     private static final int FIELD_CENTRIC = 1;
     private static final int ROBOT_CENTRIC_CORRECTED = 2;
     private static final int ROBOT_CENTRIC_BASIC = 3;
@@ -173,7 +172,7 @@ public class MecanumTeleopPinpoint extends LinearOpMode {
 
             // Intake system control
             double intakePower;
-            double INTAKE_POWER_SPEED = 0.25;
+            double INTAKE_POWER_SPEED = 0.15;
             if (gamepad2.left_bumper) {
                 intakePower = INTAKE_POWER_SPEED;
             } else if (gamepad2.right_bumper) {
@@ -193,6 +192,8 @@ public class MecanumTeleopPinpoint extends LinearOpMode {
                 scoreServo.setPosition(1);
             } else if (gamepad2.b) {
                 scoreServo.setPosition(0);
+            } else if (gamepad2.x) {
+                scoreServo.setPosition(0.5);
             }
 
             // Update telemetry
@@ -208,7 +209,7 @@ public class MecanumTeleopPinpoint extends LinearOpMode {
             pinpoint = hardwareMap.get(GoBildaPinpointDriver.class, "pinpoint");
             pinpoint.setEncoderDirections(
                     GoBildaPinpointDriver.EncoderDirection.REVERSED,
-                    GoBildaPinpointDriver.EncoderDirection.FORWARD
+                    GoBildaPinpointDriver.EncoderDirection.REVERSED
             );
             pinpoint.setEncoderResolution(GoBildaPinpointDriver.GoBildaOdometryPods.goBILDA_4_BAR_POD);
             pinpoint.resetPosAndIMU();
