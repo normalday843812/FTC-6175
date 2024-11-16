@@ -101,8 +101,7 @@ public class SplinePath {
     /**
      * Fit cubic coefficients given endpoints and derivatives.
      * Returns coefficients [a, b, c, d] for a*u³ + b*u² + c*u + d
-     *
-     * TODO: don't touch this unless you want to solve a 4x4 matrix by hand
+     * You don't deserve this documentation
      */
     private double[] fitCubic(double start, double startDeriv, double end, double endDeriv) {
         return new double[]{
@@ -113,32 +112,21 @@ public class SplinePath {
         };
     }
 
-    /**
-     * Get x-coordinate at parameter u (0 ≤ u ≤ 1)
-     */
+    // using Horner's method because why not, this spline stuff is already cursed enough
     private double getX(double u) {
-        return xCoeffs[0] * u * u * u + xCoeffs[1] * u * u + xCoeffs[2] * u + xCoeffs[3];
+        return ((xCoeffs[0] * u + xCoeffs[1]) * u + xCoeffs[2]) * u + xCoeffs[3];
     }
 
-    /**
-     * Get y-coordinate at parameter u (0 ≤ u ≤ 1)
-     */
     private double getY(double u) {
-        return yCoeffs[0] * u * u * u + yCoeffs[1] * u * u + yCoeffs[2] * u + yCoeffs[3];
+        return ((yCoeffs[0] * u + yCoeffs[1]) * u + yCoeffs[2]) * u + yCoeffs[3];
     }
 
-    /**
-     * Get derivative dx/du at parameter u
-     */
     private double getdX(double u) {
-        return 3 * xCoeffs[0] * u * u + 2 * xCoeffs[1] * u + xCoeffs[2];
+        return (3 * xCoeffs[0] * u + 2 * xCoeffs[1]) * u + xCoeffs[2];
     }
 
-    /**
-     * Get derivative dy/du at parameter u
-     */
     private double getdY(double u) {
-        return 3 * yCoeffs[0] * u * u + 2 * yCoeffs[1] * u + yCoeffs[2];
+        return (3 * yCoeffs[0] * u + 2 * yCoeffs[1]) * u + yCoeffs[2];
     }
 
     /**
@@ -196,9 +184,6 @@ public class SplinePath {
         return u0 + ratio * (u1 - u0);
     }
 
-    /**
-     * Get position along the spline at parameter u (0 ≤ u ≤ 1)
-     */
     public Vector2d getPosition(double u) {
         if (u < 0) u = 0;
         if (u > 1) u = 1;
@@ -209,25 +194,16 @@ public class SplinePath {
         return new Vector2d(x, y);
     }
 
-    /**
-     * Get velocity (dx/du, dy/du) at parameter u
-     */
     public Vector2d getVelocity(double u) {
         double dx = getdX(u);
         double dy = getdY(u);
         return new Vector2d(dx, dy);
     }
 
-    /**
-     * Get heading (angle of velocity vector) at parameter u
-     */
     public double getHeading(double u) {
         return Math.atan2(getdY(u), getdX(u));
     }
 
-    /**
-     * Get the pose (position and heading) at a given displacement
-     */
     public Pose2d getPose(double displacement) {
         double u = getParameter(displacement);
         Vector2d position = getPosition(u);
@@ -235,9 +211,6 @@ public class SplinePath {
         return new Pose2d(position, heading);
     }
 
-    /**
-     * Get the total path length (for motion profiling)
-     */
     public double getLength() {
         return totalLength;
     }

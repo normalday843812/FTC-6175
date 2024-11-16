@@ -17,7 +17,6 @@ import java.util.List;
 @Config
 public class TrajectoryBuilder {
     public static class Params {
-        // TODO: tune these values friday/comp, they're probably wrong
         public static double maxVel = 1000.0;    // mm/s
         public static double maxAccel = 500.0;   // mm/s²
         public static double maxAngVel = Math.PI; // rad/s
@@ -27,7 +26,6 @@ public class TrajectoryBuilder {
     private final List<PathSegment> segments;
     private Pose2d lastPose;
 
-    // Container for path segments with their motion profiles
     public static class PathSegment {
         public final SplinePath path;
         public final MotionProfile profile;
@@ -49,7 +47,8 @@ public class TrajectoryBuilder {
     public TrajectoryBuilder lineTo(Vector2d endPosition) {
         Pose2d endPose = new Pose2d(endPosition, lastPose.heading);
         SplinePath path = new SplinePath(lastPose, endPose);
-        MotionProfile profile = new MotionProfile(0, path.getLength(), Params.maxVel, Params.maxAccel);
+        MotionProfile profile = new MotionProfile(0, path.getLength(),
+                Params.maxVel, Params.maxAccel);
 
         segments.add(new PathSegment(path, profile));
         lastPose = endPose;
@@ -61,7 +60,8 @@ public class TrajectoryBuilder {
      */
     public TrajectoryBuilder lineToLinearHeading(Pose2d endPose) {
         SplinePath path = new SplinePath(lastPose, endPose);
-        MotionProfile profile = new MotionProfile(0, path.getLength(), Params.maxVel, Params.maxAccel);
+        MotionProfile profile = new MotionProfile(0, path.getLength(),
+                Params.maxVel, Params.maxAccel);
 
         segments.add(new PathSegment(path, profile));
         lastPose = endPose;
@@ -70,11 +70,11 @@ public class TrajectoryBuilder {
 
     /**
      * Add a spline segment to the trajectory
-     * TODO: no touchies or robot have a seizure
      */
     public TrajectoryBuilder splineTo(Pose2d endPose) {
         SplinePath path = new SplinePath(lastPose, endPose);
-        MotionProfile profile = new MotionProfile(0, path.getLength(), Params.maxVel, Params.maxAccel);
+        MotionProfile profile = new MotionProfile(0, path.getLength(),
+                Params.maxVel, Params.maxAccel);
 
         segments.add(new PathSegment(path, profile));
         lastPose = endPose;
@@ -84,19 +84,16 @@ public class TrajectoryBuilder {
     /**
      * Add a turn in place to the trajectory
      */
-    // TODO: if the robot spins in circles check the sign of this angle
-    public TrajectoryBuilder turn(double angle) {
+    public TrajectoryBuilder turn(double angle) {  // Positive = clockwise
         double startHeading = lastPose.heading;
-        double endHeading = startHeading + angle;  // Positive angle = clockwise
+        double endHeading = startHeading + angle;
 
         MotionProfile profile = new MotionProfile(
                 startHeading, endHeading,
                 Params.maxAngVel, Params.maxAngAccel
         );
 
-        // Create a zero-distance path that just changes heading
         lastPose = new Pose2d(lastPose.position, endHeading);
-
         segments.add(new PathSegment(
                 new SplinePath(lastPose, lastPose),  // Zero-distance path
                 profile
@@ -119,10 +116,10 @@ public class TrajectoryBuilder {
     /**
      * Add a forward movement
      */
-    public TrajectoryBuilder forward(double distance) {
+    public TrajectoryBuilder forward(double distance) {  // Positive = forward
         Vector2d endPosition = lastPose.position.plus(
                 new Vector2d(
-                        distance * Math.cos(lastPose.heading),  // Forward = +X
+                        distance * Math.cos(lastPose.heading),
                         distance * Math.sin(lastPose.heading)
                 )
         );
@@ -133,17 +130,16 @@ public class TrajectoryBuilder {
      * Add a backward movement
      */
     public TrajectoryBuilder back(double distance) {
-        return forward(-distance);  // Backward = -X
+        return forward(-distance);
     }
 
     /**
      * Add a strafe movement
-     * TODO: The old code had +PI/2 here which was wrong, if something breaks check this first
      */
-    public TrajectoryBuilder strafeLeft(double distance) {
+    public TrajectoryBuilder strafeLeft(double distance) {  // Positive = left = -Y
         Vector2d endPosition = lastPose.position.plus(
                 new Vector2d(
-                        distance * Math.cos(lastPose.heading - Math.PI/2),  // Left = -Y = -PI/2
+                        distance * Math.cos(lastPose.heading - Math.PI/2),
                         distance * Math.sin(lastPose.heading - Math.PI/2)
                 )
         );
@@ -154,21 +150,16 @@ public class TrajectoryBuilder {
      * Add a right strafe movement
      */
     public TrajectoryBuilder strafeRight(double distance) {
-        return strafeLeft(-distance);  // Right = +Y
+        return strafeLeft(-distance);
     }
 
     /**
      * Build the complete trajectory
      */
-    // I spent 2 hours debugging why the robot wouldn't move only to realize
-    // I forgot to call build() fuck me
     public Trajectory build() {
         return new Trajectory(segments);
     }
 
-    /**
-     * Get the current end pose of the trajectory
-     */
     public Pose2d getCurrentPose() {
         return lastPose;
     }

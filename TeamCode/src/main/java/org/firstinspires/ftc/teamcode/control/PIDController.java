@@ -4,12 +4,6 @@ import com.acmerobotics.dashboard.config.Config;
 
 @Config
 public class PIDController {
-    public static class Params {
-        // Default gains - can be tuned via Dashboard
-        public static double DEFAULT_kP = 0.1;
-        public static double DEFAULT_kI = 0.0;
-        public static double DEFAULT_kD = 0.0;
-    }
 
     private final double kP, kI, kD;
     private double errorSum = 0;
@@ -21,9 +15,9 @@ public class PIDController {
     private double outputMin = Double.NEGATIVE_INFINITY;
     private double outputMax = Double.POSITIVE_INFINITY;
 
-    public PIDController() {
-        this(Params.DEFAULT_kP, Params.DEFAULT_kI, Params.DEFAULT_kD);
-    }
+    // save last output for derivative smoothing
+    private double lastOutput = 0;
+    private static final double DERIVATIVE_SMOOTHING = 0.8;  // 0 = no smoothing, 1 = infinite smoothing
 
     public PIDController(double kP, double kI, double kD) {
         this.kP = kP;
@@ -37,6 +31,7 @@ public class PIDController {
     public void reset() {
         errorSum = 0;
         lastError = 0;
+        lastOutput = 0;
         lastTime = System.nanoTime() / 1e9;
     }
 
@@ -57,42 +52,48 @@ public class PIDController {
     }
 
     /**
-     * Calculate control output based on error and elapsed time
+     * Calculate PID output for given error
+     * If dt is too large or zero, only P term is used
      */
     public double calculate(double error) {
         double currentTime = System.nanoTime() / 1e9;
         double dt = currentTime - lastTime;
 
-        if (dt <= 0) {
+        // Prevent huge dt values or divide by zero
+        if (dt <= 0 || dt > 0.5) {  // Skip I and D if dt > 0.5 sec (robot probably stuck/disabled)
             lastTime = currentTime;
-            return 0;
+            lastError = error;
+            return kP * error;  // Just use P term
         }
 
         // Proportional term
         double P = kP * error;
 
         // Integral term with anti-windup
-        errorSum += error * dt;
+        // Only integrate if we're close to target (prevent windup from large errors)
+        if (Math.abs(error) < 1.0) {  // Arbitrary threshold, adjust if needed
+            errorSum += error * dt;
+        }
         errorSum = Math.min(Math.max(errorSum, integralMin), integralMax);
         double I = kI * errorSum;
 
-        // Derivative term (on measurement to avoid derivative kick)
-        double derivative = dt > 0 ? (error - lastError) / dt : 0;
-        double D = kD * derivative;
+        // Derivative term on error (with smoothing)
+        // Note: Some prefer derivative on measurement to avoid derivative kick
+        double derivative = (error - lastError) / dt;
+        double smoothedDerivative = DERIVATIVE_SMOOTHING * lastOutput +
+                (1 - DERIVATIVE_SMOOTHING) * derivative;
+        double D = kD * smoothedDerivative;
 
         // Update state
         lastError = error;
         lastTime = currentTime;
 
-        // Calculate and limit output
+        // Calculate total output
         double output = P + I + D;
+        lastOutput = output;
+
+        // Limit output
         return Math.min(Math.max(output, outputMin), outputMax);
     }
 
-    /**
-     * Calculate control output for tracking a target value
-     */
-    public double calculate(double current, double target) {
-        return calculate(target - current);
-    }
 }

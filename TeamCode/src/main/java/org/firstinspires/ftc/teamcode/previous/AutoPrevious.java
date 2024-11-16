@@ -27,10 +27,17 @@ public class AutoPrevious extends LinearOpMode {
 
         waitForStart();
 
-        driveLeft();
+        driveForward();
         sleep(500);
 
         stopDriving();
+    }
+
+    private void driveForward() {
+        frontLeft.setPower(-1.0);
+        backLeft.setPower(-1.0);
+        frontRight.setPower(-1.0);
+        backRight.setPower(-1.0);
     }
 
     private void stopDriving() {

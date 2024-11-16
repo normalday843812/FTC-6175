@@ -3,6 +3,7 @@ package org.firstinspires.ftc.teamcode;
 import com.acmerobotics.dashboard.FtcDashboard;
 import com.acmerobotics.dashboard.config.Config;
 import com.acmerobotics.dashboard.telemetry.MultipleTelemetry;
+import com.qualcomm.ftccommon.SoundPlayer;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
@@ -11,6 +12,7 @@ import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.teamcode.geometry.Pose2d;
 import org.firstinspires.ftc.teamcode.trajectories.Trajectory;
+import org.firstinspires.ftc.robotcore.external.android.AndroidSoundPool;
 
 @Config
 @Autonomous(name="Auto Final", group="Competition")
@@ -43,13 +45,17 @@ public class AutonomousFinal extends LinearOpMode {
         try {
             initialize();
 
+            AndroidSoundPool androidSoundPool = new AndroidSoundPool();
+            androidSoundPool.initialize(SoundPlayer.getInstance());
+            androidSoundPool.preloadSound("fun.mp3");
+
             telemetry.addLine("Initialization complete - Ready!");
             telemetry.update();
 
             waitForStart();
             if (isStopRequested()) return;
-
             executeAutonomous();
+            androidSoundPool.close();
         } catch (Exception e) {
             handleFatalError("Fatal error in autonomous", e);
         } finally {
