@@ -24,8 +24,6 @@ public class BlueTuningOpmode extends LinearOpMode {
         private final Point objectCenter = new Point();
         private volatile boolean blueObjectDetected = false;
         private double currentAngle = 0.0;
-
-        // HSV Thresholds
         private int hMin = 165;
         private int hMax = 255;
         private int sMin = 150;
