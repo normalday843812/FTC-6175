@@ -1,0 +1,44 @@
+package org.firstinspires.ftc.teamcode;
+
+import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
+import com.qualcomm.robotcore.hardware.Servo;
+import com.qualcomm.robotcore.eventloop.opmode.OpMode;
+
+@TeleOp(name="RTK Servo Test", "group=TeleOp")
+  public class RTKServoTest extends {
+    private Servo myServo; // Define the servo
+    private double servoPosition = 0.0; // Starting position (Retracted)
+    private final double SERVO_INCREMENT = 0.125; // Amount to move the servo each cycle
+    private final double SERVO_MIN = 0.0; // Minimum servo position
+    private final double SERVO_MAX = 1.0; // Maximum servo position
+ @Override
+    public void init() {
+        // Map the servo to its hardware configuration name
+        myServo = hardwareMap.get(Servo.class, "myServo");
+        myServo.setPosition(servoPosition); // Set the initial position
+        telemetry.addData("Status", "Initialized");
+    }
+
+    @Override
+    public void loop() {
+        // Check if "A" button is pressed to move the servo up
+        if (gamepad1.a) {
+            servoPosition += SERVO_INCREMENT;
+        }
+        // Check if "B" button is pressed to move the servo down
+        else if (gamepad1.b) {
+            servoPosition -= SERVO_INCREMENT;
+        }
+
+        // Clamp the position to the valid range (0.0 to 1.0)
+        servoPosition = Math.max(SERVO_MIN, Math.min(SERVO_MAX, servoPosition));
+
+        // Update the servo position
+        myServo.setPosition(servoPosition);
+
+        // Send telemetry data to the driver station for debugging
+        telemetry.addData("Servo Position", servoPosition);
+        telemetry.addData("Press A to increase, B to decrease");
+        telemetry.update();
+    }
+}
