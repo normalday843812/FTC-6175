@@ -9,16 +9,19 @@ public class FullThing extends LinearOpMode {
     private boolean isClawOpen = false;
     private boolean previousAState = false;
     private boolean previousYState = false;
+    private boolean previousBState = false;
     private double clawRollServoPos = 0.5;
     private double clawPitchServoPos = 0.5;
 
-    // State machine variables
+    private double armServoPosition = 0.5;
+
+    private double armPitchServoPosition = 0.5;
     private enum SequenceState {
         IDLE,
         PICKUP_OPEN_CLAW,
-        PICKUP_MOVE_TO_POSITION,
-        PICKUP_CLOSE_CLAW,
-        PICKUP_RETURN
+        PICKUP_RETURN,
+        PLACE_CLOSE_CLAW,
+        PLACE_RETURN
     }
 
     private SequenceState currentState = SequenceState.IDLE;
@@ -34,22 +37,29 @@ public class FullThing extends LinearOpMode {
 
         waitForStart();
 
+        robot.ArmServo0.setPosition(armServoPosition);
+        robot.ArmServo1.setPosition(1.0 - armServoPosition);
+
+        robot.ArmPitchServo0.setPosition(armPitchServoPosition);
+        robot.ArmPitchServo1.setPosition(1.0 - armPitchServoPosition);
+
         while (opModeIsActive()) {
             long currentTime = System.currentTimeMillis();
             double deltaTime = (currentTime - lastUpdateTime) / 1000.0;
             lastUpdateTime = currentTime;
 
-            // Always handle driving and manual controls
             handleDriving();
             handleManualControls(deltaTime);
 
-            // Check for sequence start
             if (gamepad2.y && !previousYState && currentState == SequenceState.IDLE) {
-                startPickupSequence();
+                startMoveToPositionSequence();
+            }
+            if (gamepad2.b && !previousBState && currentState == SequenceState.IDLE) {
+                startMoveOutOfPositionSequence();
             }
             previousYState = gamepad2.y;
+            previousBState = gamepad2.b;
 
-            // Handle ongoing sequence
             updateSequence(currentTime);
 
             updateTelemetry();
@@ -82,7 +92,6 @@ public class FullThing extends LinearOpMode {
     }
 
     private void handleManualControls(double deltaTime) {
-        // Only allow manual servo controls if no sequence is running
         if (currentState == SequenceState.IDLE) {
             if (gamepad2.a && !previousAState) {
                 isClawOpen = !isClawOpen;
@@ -99,16 +108,43 @@ public class FullThing extends LinearOpMode {
             double pitchDelta = pitchInput * HardwareMapThing.MAX_SERVO_SPEED * deltaTime;
             clawPitchServoPos = constrainServoPosition(clawPitchServoPos + pitchDelta);
             robot.clawPitchServo.setPosition(clawPitchServoPos);
+
+            double armInputHigher = gamepad2.right_trigger;
+            double armInputLower = gamepad2.left_trigger;
+
+            double armPitchInputHigher = gamepad2.right_bumper ? 1 : 0;
+            double armPitchInputLower = gamepad2.left_bumper ? 1 : 0;
+
+
+            armServoPosition += armInputHigher * 0.00175;
+            armServoPosition -= armInputLower * 0.00175;
+            armServoPosition = Math.max(0.0, Math.min(1.0, armServoPosition));
+
+            armPitchServoPosition += armPitchInputHigher * 0.00175;
+            armPitchServoPosition -= armPitchInputLower * 0.00175;
+            armPitchServoPosition = Math.max(0.0, Math.min(1.0, armPitchServoPosition));
+
+            robot.ArmServo0.setPosition(armServoPosition);
+            robot.ArmServo1.setPosition(1.0 - armServoPosition);
+            robot.ArmPitchServo0.setPosition(armPitchServoPosition);
+            robot.ArmPitchServo1.setPosition(1.0 - armPitchServoPosition);
         }
     }
 
-    private void startPickupSequence() {
+    private void startMoveToPositionSequence() {
         currentState = SequenceState.PICKUP_OPEN_CLAW;
         stateStartTime = System.currentTimeMillis();
 
-        // Start the sequence by opening the claw
         isClawOpen = true;
         robot.clawServo.setPosition(HardwareMapThing.CLAW_MAX_POSITION);
+    }
+
+    private void startMoveOutOfPositionSequence() {
+        currentState = SequenceState.PLACE_CLOSE_CLAW;
+        stateStartTime = System.currentTimeMillis();
+
+        isClawOpen = false;
+        robot.clawServo.setPosition(HardwareMapThing.CLAW_MIN_POSITION);
     }
 
     private void updateSequence(long currentTime) {
@@ -118,45 +154,27 @@ public class FullThing extends LinearOpMode {
 
         switch (currentState) {
             case PICKUP_OPEN_CLAW:
-                if (timeInState >= 250) {  // After 250ms
-                    // Move to position
-                    robot.clawPitchServo.setPosition(0.7);
-                    robot.clawRollServo.setPosition(0.3);
-                    clawPitchServoPos = 0.7;
-                    clawRollServoPos = 0.3;
-
-                    currentState = SequenceState.PICKUP_MOVE_TO_POSITION;
-                    stateStartTime = currentTime;
-                }
-                break;
-
-            case PICKUP_MOVE_TO_POSITION:
-                if (timeInState >= 500) {  // After 500ms
-                    // Close claw
-                    isClawOpen = false;
-                    robot.clawServo.setPosition(HardwareMapThing.CLAW_MIN_POSITION);
-
-                    currentState = SequenceState.PICKUP_CLOSE_CLAW;
-                    stateStartTime = currentTime;
-                }
-                break;
-
-            case PICKUP_CLOSE_CLAW:
-                if (timeInState >= 250) {  // After 250ms
-                    // Return to carry position
-                    robot.clawPitchServo.setPosition(0.5);
-                    robot.clawRollServo.setPosition(0.5);
-                    clawPitchServoPos = 0.5;
-                    clawRollServoPos = 0.5;
-
+                if (timeInState >= 250) {
                     currentState = SequenceState.PICKUP_RETURN;
                     stateStartTime = currentTime;
                 }
                 break;
 
             case PICKUP_RETURN:
-                if (timeInState >= 500) {  // After 500ms
-                    // Sequence complete
+                if (timeInState >= 500) {
+                    currentState = SequenceState.IDLE;
+                }
+                break;
+
+            case PLACE_CLOSE_CLAW:
+                if (timeInState >= 250) {
+                    currentState = SequenceState.PLACE_RETURN;
+                    stateStartTime = currentTime;
+                }
+                break;
+
+            case PLACE_RETURN:
+                if (timeInState >= 500) {
                     currentState = SequenceState.IDLE;
                 }
                 break;
@@ -170,6 +188,8 @@ public class FullThing extends LinearOpMode {
         telemetry.addData("Claw", isClawOpen ? "opne" : "closed");
         telemetry.addData("Roll", "%.3f", clawRollServoPos);
         telemetry.addData("pitch", "%.3f", clawPitchServoPos);
+        telemetry.addData("armPitch", "%.3f", armPitchServoPosition);
+        telemetry.addData("arm", "%.3f", armServoPosition);
         telemetry.addData("Sequence State", currentState);
         telemetry.update();
     }

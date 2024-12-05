@@ -1,54 +1,41 @@
 package org.firstinspires.ftc.teamcode;
 
+import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.Servo;
-import com.qualcomm.robotcore.eventloop.opmode.OpMode;
-
 @TeleOp(name = "RTKServoTest", group = "TeleOp")
-public class RTKServoTest extends OpMode {
-
-    private Servo servo1; // Servo connected to port 0
-    private Servo servo2; // Servo connected to port 1
-    private double servoPosition = 0.5; // Starting position (middle)
-    private final double SERVO_INCREMENT = 0.01; // Amount to move the servo each cycle
-    private final double SERVO_MIN = 0.0; // Minimum servo position
-    private final double SERVO_MAX = 1.0; // Maximum servo position
+public class RTKServoTest extends LinearOpMode {
+    private double servoPosition = 0.5;
 
     @Override
-    public void init() {
-        // Map the servos to their hardware configuration names
-        servo1 = hardwareMap.get(Servo.class, "servo1");
-        servo2 = hardwareMap.get(Servo.class, "servo2");
+    public void runOpMode() throws InterruptedException {
+        Servo ArmServo0 = hardwareMap.get(Servo.class, "ArmServo0");
+        Servo ArmServo1 = hardwareMap.get(Servo.class, "ArmServo1");
 
-        // Set the initial positions for both servos
-        servo1.setPosition(servoPosition);
-        servo2.setPosition(1.0 - servoPosition); // Opposite position of servo1
+        ArmServo0.setPosition(servoPosition);
+        ArmServo1.setPosition(1.0 - servoPosition);
 
         telemetry.addData("Status", "Initialized");
-    }
 
-    @Override
-    public void loop() {
-        // Check if "A" button is pressed to move the servos up
-        if (gamepad1.a) {
-            servoPosition += SERVO_INCREMENT;
+        waitForStart();
+
+        if (isStopRequested()) return;
+
+        while (opModeIsActive()) {
+
+            double SERVO_INCREMENT = 0.00175;
+            if (gamepad1.a) {
+                servoPosition += SERVO_INCREMENT;
+            }
+            else if (gamepad1.b) {
+                servoPosition -= SERVO_INCREMENT;
+            }
+
+            servoPosition = Math.max(0.0, Math.min(1.0, servoPosition));
+
+            ArmServo0.setPosition(servoPosition);
+            ArmServo1.setPosition(1.0 - servoPosition);
+            telemetry.update();
         }
-        // Check if "B" button is pressed to move the servos down
-        else if (gamepad1.b) {
-            servoPosition -= SERVO_INCREMENT;
-        }
-
-        // Clamp the position to the valid range (0.0 to 1.0)
-        servoPosition = Math.max(SERVO_MIN, Math.min(SERVO_MAX, servoPosition));
-
-        // Update the positions of both servos
-        servo1.setPosition(servoPosition);
-        servo2.setPosition(1.0 - servoPosition); // Ensure opposite movement
-
-        // Send telemetry data to the driver station for debugging
-        telemetry.addData("Servo 1 Position", servo1.getPosition());
-        telemetry.addData("Servo 2 Position", servo2.getPosition());
-        telemetry.addLine("Press A to increase, B to decrease");
-        telemetry.update();
     }
 }
