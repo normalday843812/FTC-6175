@@ -8,11 +8,10 @@ public class ThickOfIt {
     private final AndroidSoundPool androidSoundPool;
     private int currentSoundIndex;
     private static final int TOTAL_SOUNDS = 33;
-    private static final double SOUND_DURATION_MS = 5000; // 5 seconds per sound
+    private static final double SOUND_DURATION_MS = 5000;
     private final ElapsedTime soundTimer;
     private boolean isPlaying;
 
-    // Constructor
     public ThickOfIt() {
         androidSoundPool = new AndroidSoundPool();
         androidSoundPool.initialize(SoundPlayer.getInstance());
@@ -21,7 +20,6 @@ public class ThickOfIt {
         isPlaying = false;
     }
 
-    // Preload all sounds
     public void preloadSounds() {
         for (int i = 1; i <= TOTAL_SOUNDS; i++) {
             String soundFileName = i + ".mp3";
@@ -35,7 +33,6 @@ public class ThickOfIt {
         }
     }
 
-    // Start or continue the sound sequence
     public void startSoundSequence() {
         if (!isPlaying) {
             isPlaying = true;
