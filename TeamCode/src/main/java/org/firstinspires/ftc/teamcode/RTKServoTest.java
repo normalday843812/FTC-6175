@@ -4,8 +4,8 @@ import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 
-@TeleOp(name = "Dual Servo Control", group = "TeleOp")
-public class DualServoControl extends OpMode {
+@TeleOp(name = "RTKServoTest", group = "TeleOp")
+public class RTKServoTest extends OpMode {
 
     private Servo servo1; // Servo connected to port 0
     private Servo servo2; // Servo connected to port 1
@@ -48,7 +48,7 @@ public class DualServoControl extends OpMode {
         // Send telemetry data to the driver station for debugging
         telemetry.addData("Servo 1 Position", servo1.getPosition());
         telemetry.addData("Servo 2 Position", servo2.getPosition());
-        telemetry.addData("Press A to increase, B to decrease");
+        telemetry.addLine("Press A to increase, B to decrease");
         telemetry.update();
     }
 }
