@@ -16,6 +16,8 @@ import com.acmerobotics.roadrunner.ftc.LateralPushTest;
 import com.acmerobotics.roadrunner.ftc.LateralRampLogger;
 import com.acmerobotics.roadrunner.ftc.ManualFeedforwardTuner;
 import com.acmerobotics.roadrunner.ftc.MecanumMotorDirectionDebugger;
+import com.acmerobotics.roadrunner.ftc.OverflowEncoder;
+import com.acmerobotics.roadrunner.ftc.RawEncoder;
 import com.qualcomm.hardware.lynx.LynxModule;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.OpModeManager;
@@ -23,16 +25,17 @@ import com.qualcomm.robotcore.eventloop.opmode.OpModeRegistrar;
 
 import org.firstinspires.ftc.robotcore.internal.opmode.OpModeMeta;
 import org.firstinspires.ftc.teamcode.MecanumDrive;
-import org.firstinspires.ftc.teamcode.TankDrive;
-import org.firstinspires.ftc.teamcode.ThreeDeadWheelLocalizer;
-import org.firstinspires.ftc.teamcode.TwoDeadWheelLocalizer;
+import org.firstinspires.ftc.teamcode.PinpointLocalizer;
+import org.firstinspires.ftc.teamcode.justincase.TankDrive;
+import org.firstinspires.ftc.teamcode.justincase.ThreeDeadWheelLocalizer;
+import org.firstinspires.ftc.teamcode.justincase.TwoDeadWheelLocalizer;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
 public final class TuningOpModes {
-    // TODO: change this to TankDrive.class if you're using tank
+    // Not using tank drive; not setting it to tank drive or anything
     public static final Class<?> DRIVE_CLASS = MecanumDrive.class;
 
     public static final String GROUP = "quickstart";
@@ -57,8 +60,11 @@ public final class TuningOpModes {
             dvf = hardwareMap -> {
                 MecanumDrive md = new MecanumDrive(hardwareMap, new Pose2d(0, 0, 0));
 
-                List<Encoder> leftEncs = new ArrayList<>(), rightEncs = new ArrayList<>();
-                List<Encoder> parEncs = new ArrayList<>(), perpEncs = new ArrayList<>();
+                List<Encoder> leftEncs = new ArrayList<>();
+                List<Encoder> rightEncs = new ArrayList<>();
+                List<Encoder> parEncs = new ArrayList<>();
+                List<Encoder> perpEncs = new ArrayList<>();
+
                 if (md.localizer instanceof MecanumDrive.DriveLocalizer) {
                     MecanumDrive.DriveLocalizer dl = (MecanumDrive.DriveLocalizer) md.localizer;
                     leftEncs.add(dl.leftFront);
@@ -74,12 +80,24 @@ public final class TuningOpModes {
                     TwoDeadWheelLocalizer dl = (TwoDeadWheelLocalizer) md.localizer;
                     parEncs.add(dl.par);
                     perpEncs.add(dl.perp);
+                } else if (md.localizer instanceof PinpointLocalizer) {
+                    // For Pinpoint, we'll create motor encoders using the existing motors from MecanumDrive
+                    Encoder leftFrontEnc = new OverflowEncoder(new RawEncoder(md.leftFront));
+                    Encoder leftBackEnc = new OverflowEncoder(new RawEncoder(md.leftBack));
+                    Encoder rightFrontEnc = new OverflowEncoder(new RawEncoder(md.rightFront));
+                    Encoder rightBackEnc = new OverflowEncoder(new RawEncoder(md.rightBack));
+
+                    // Add them to the appropriate lists
+                    leftEncs.add(leftFrontEnc);
+                    leftEncs.add(leftBackEnc);
+                    rightEncs.add(rightFrontEnc);
+                    rightEncs.add(rightBackEnc);
                 } else {
-                    throw new RuntimeException("unknown localizer: " + md.localizer.getClass().getName());
+                    throw new RuntimeException("Unknown localizer: " + md.localizer.getClass().getName());
                 }
 
                 return new DriveView(
-                    DriveType.MECANUM,
+                        DriveType.MECANUM,
                         MecanumDrive.PARAMS.inPerTick,
                         MecanumDrive.PARAMS.maxWheelVel,
                         MecanumDrive.PARAMS.minProfileAccel,
@@ -97,7 +115,8 @@ public final class TuningOpModes {
                         rightEncs,
                         parEncs,
                         perpEncs,
-                        md.lazyImu,
+                        // Only use IMU if not using Pinpoint
+                        (md.localizer instanceof PinpointLocalizer) ? null : md.lazyImu,
                         md.voltageSensor,
                         () -> new MotorFeedforward(MecanumDrive.PARAMS.kS,
                                 MecanumDrive.PARAMS.kV / MecanumDrive.PARAMS.inPerTick,
@@ -108,8 +127,11 @@ public final class TuningOpModes {
             dvf = hardwareMap -> {
                 TankDrive td = new TankDrive(hardwareMap, new Pose2d(0, 0, 0));
 
-                List<Encoder> leftEncs = new ArrayList<>(), rightEncs = new ArrayList<>();
-                List<Encoder> parEncs = new ArrayList<>(), perpEncs = new ArrayList<>();
+                List<Encoder> leftEncs = new ArrayList<>();
+                List<Encoder> rightEncs = new ArrayList<>();
+                List<Encoder> parEncs = new ArrayList<>();
+                List<Encoder> perpEncs = new ArrayList<>();
+
                 if (td.localizer instanceof TankDrive.DriveLocalizer) {
                     TankDrive.DriveLocalizer dl = (TankDrive.DriveLocalizer) td.localizer;
                     leftEncs.addAll(dl.leftEncs);
@@ -123,12 +145,13 @@ public final class TuningOpModes {
                     TwoDeadWheelLocalizer dl = (TwoDeadWheelLocalizer) td.localizer;
                     parEncs.add(dl.par);
                     perpEncs.add(dl.perp);
+                } else if (td.localizer instanceof PinpointLocalizer) {
                 } else {
-                    throw new RuntimeException("unknown localizer: " + td.localizer.getClass().getName());
+                    throw new RuntimeException("Unknown localizer: " + td.localizer.getClass().getName());
                 }
 
                 return new DriveView(
-                    DriveType.TANK,
+                        DriveType.TANK,
                         TankDrive.PARAMS.inPerTick,
                         TankDrive.PARAMS.maxWheelVel,
                         TankDrive.PARAMS.minProfileAccel,
@@ -140,7 +163,7 @@ public final class TuningOpModes {
                         rightEncs,
                         parEncs,
                         perpEncs,
-                        td.lazyImu,
+                        (td.localizer instanceof PinpointLocalizer) ? null : td.lazyImu,
                         td.voltageSensor,
                         () -> new MotorFeedforward(TankDrive.PARAMS.kS,
                                 TankDrive.PARAMS.kV / TankDrive.PARAMS.inPerTick,
