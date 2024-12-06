@@ -128,6 +128,11 @@ public class FullThing extends LinearOpMode {
             robot.ArmServo1.setPosition(1.0 - armServoPosition);
             robot.ArmPitchServo0.setPosition(armPitchServoPosition);
             robot.ArmPitchServo1.setPosition(1.0 - armPitchServoPosition);
+
+
+            double bucketInput = (gamepad2.dpad_up ? 1.0 : 0.0) - (gamepad2.dpad_down ? 1.0 : 0.0);
+
+            robot.BucketMotor1.setPower(bucketInput);
         }
     }
 

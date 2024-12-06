@@ -1,5 +1,5 @@
-// HardwareMapThing.java
 package org.firstinspires.ftc.teamcode;
+
 
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.HardwareMap;
@@ -10,6 +10,8 @@ public class HardwareMapThing {
     public DcMotor FRMotor = null;
     public DcMotor BLMotor = null;
     public DcMotor BRMotor = null;
+    public DcMotor BucketMotor0 = null;
+    public DcMotor BucketMotor1 = null;
     public Servo clawServo = null;
     public Servo clawRollServo = null;
     public Servo clawPitchServo = null;
@@ -33,6 +35,10 @@ public class HardwareMapThing {
         BLMotor = hwMap.get(DcMotor.class, "BLMotor");
         BRMotor = hwMap.get(DcMotor.class, "BRMotor");
 
+        // Bucket Motors
+        BucketMotor0 = hwMap.get(DcMotor.class, "BucketMotor0");
+        BucketMotor1 = hwMap.get(DcMotor.class, "BucketMotor1");
+
         // Motor directions
         FLMotor.setDirection(DcMotor.Direction.FORWARD);
         FRMotor.setDirection(DcMotor.Direction.REVERSE);
@@ -45,10 +51,16 @@ public class HardwareMapThing {
         BLMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         BRMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
 
+        BucketMotor0.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        BucketMotor1.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+
         FLMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         FRMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         BLMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         BRMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+
+        BucketMotor0.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        BucketMotor1.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
 
         // Servo Init
         // Claw
@@ -71,5 +83,8 @@ public class HardwareMapThing {
         FRMotor.setPower(0);
         BLMotor.setPower(0);
         BRMotor.setPower(0);
+
+        BucketMotor0.setPower(0);
+        BucketMotor1.setPower(0);
     }
 }
