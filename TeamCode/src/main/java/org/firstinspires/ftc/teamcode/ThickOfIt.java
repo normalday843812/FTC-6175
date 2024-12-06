@@ -42,7 +42,6 @@ public class ThickOfIt {
         }
     }
 
-    // Update method - should be called in the OpMode loop
     public void update() {
         if (isPlaying && soundTimer.milliseconds() >= SOUND_DURATION_MS) {
             currentSoundIndex++;
@@ -56,7 +55,6 @@ public class ThickOfIt {
         }
     }
 
-    // Play the current sound
     private void playCurrentSound() {
         String soundFileName = currentSoundIndex + ".mp3";
         boolean success = androidSoundPool.play(soundFileName);
@@ -65,27 +63,21 @@ public class ThickOfIt {
             System.out.println("Playing sound: " + soundFileName);
         } else {
             System.out.println("Failed to play sound: " + soundFileName);
-            isPlaying = false;  // Stop sequence if playback fails
+            isPlaying = false;
         }
     }
 
-    // Stop the sequence
     public void stopSequence() {
         isPlaying = false;
         currentSoundIndex = 1;
     }
-
-    // Get current sound index
     public int getCurrentIndex() {
         return currentSoundIndex;
     }
-
-    // Check if sequence is playing
     public boolean isPlaying() {
         return isPlaying;
     }
 
-    // Cleanup resources
     public void release() {
         androidSoundPool.close();
         System.out.println("Resources released.");
