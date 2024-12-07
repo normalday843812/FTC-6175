@@ -34,6 +34,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+/** @noinspection DataFlowIssue*/
 public final class TuningOpModes {
     // Not using tank drive; not setting it to tank drive or anything
     public static final Class<?> DRIVE_CLASS = MecanumDrive.class;
@@ -116,6 +117,7 @@ public final class TuningOpModes {
                         parEncs,
                         perpEncs,
                         // Only use IMU if not using Pinpoint
+
                         (md.localizer instanceof PinpointLocalizer) ? null : md.lazyImu,
                         md.voltageSensor,
                         () -> new MotorFeedforward(MecanumDrive.PARAMS.kS,
@@ -145,7 +147,9 @@ public final class TuningOpModes {
                     TwoDeadWheelLocalizer dl = (TwoDeadWheelLocalizer) td.localizer;
                     parEncs.add(dl.par);
                     perpEncs.add(dl.perp);
-                } else if (td.localizer instanceof PinpointLocalizer) {
+                } else //noinspection StatementWithEmptyBody
+                    if (td.localizer instanceof PinpointLocalizer) {
+
                 } else {
                     throw new RuntimeException("Unknown localizer: " + td.localizer.getClass().getName());
                 }

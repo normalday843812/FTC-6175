@@ -5,6 +5,9 @@ import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.Servo;
 
+/** @noinspection BooleanMethodIsAlwaysInverted*/
+
+// 90% of this stuff is just for pure sanity and to make it as robust as possible
 public class HardwareMapThing {
     public DcMotor FLMotor = null;
     public DcMotor FRMotor = null;
@@ -23,68 +26,97 @@ public class HardwareMapThing {
     public static final double CLAW_MAX_POSITION = 0.39;
     public static final double DEADZONE = 0.1;
     public static final double MAX_SERVO_SPEED = 1.0;
-
     public HardwareMap hwMap = null;
+    private boolean hardwareError = false;
+    private final StringBuilder errorMessage = new StringBuilder();
 
     public void init(HardwareMap ahwMap) {
         hwMap = ahwMap;
 
-        // Drive motors
-        FLMotor = hwMap.get(DcMotor.class, "FLMotor");
-        FRMotor = hwMap.get(DcMotor.class, "FRMotor");
-        BLMotor = hwMap.get(DcMotor.class, "BLMotor");
-        BRMotor = hwMap.get(DcMotor.class, "BRMotor");
+        FLMotor = safeGetDevice(DcMotor.class, "FLMotor");
+        FRMotor = safeGetDevice(DcMotor.class, "FRMotor");
+        BLMotor = safeGetDevice(DcMotor.class, "BLMotor");
+        BRMotor = safeGetDevice(DcMotor.class, "BRMotor");
+        BucketMotor0 = safeGetDevice(DcMotor.class, "BucketMotor0");
+        BucketMotor1 = safeGetDevice(DcMotor.class, "BucketMotor1");
 
-        // Bucket Motors
-        BucketMotor0 = hwMap.get(DcMotor.class, "BucketMotor0");
-        BucketMotor1 = hwMap.get(DcMotor.class, "BucketMotor1");
+        clawServo = safeGetDevice(Servo.class, "clawServo");
+        clawRollServo = safeGetDevice(Servo.class, "clawRollServo");
+        clawPitchServo = safeGetDevice(Servo.class, "clawPitchServo");
+        ArmServo0 = safeGetDevice(Servo.class, "ArmServo0");
+        ArmServo1 = safeGetDevice(Servo.class, "ArmServo1");
+        ArmPitchServo0 = safeGetDevice(Servo.class, "ArmPitchServo0");
+        ArmPitchServo1 = safeGetDevice(Servo.class, "ArmPitchServo1");
 
-        // Motor directions
-        FLMotor.setDirection(DcMotor.Direction.FORWARD);
-        FRMotor.setDirection(DcMotor.Direction.REVERSE);
-        BLMotor.setDirection(DcMotor.Direction.FORWARD);
-        BRMotor.setDirection(DcMotor.Direction.REVERSE);
+        if (!hardwareError) {
+            configureMotorsAndServos();
+        }
+    }
 
-        // Motor modes
-        FLMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-        FRMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-        BLMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-        BRMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+    private void configureMotorsAndServos() {
+        if (FLMotor != null) FLMotor.setDirection(DcMotor.Direction.FORWARD);
+        if (FRMotor != null) FRMotor.setDirection(DcMotor.Direction.REVERSE);
+        if (BLMotor != null) BLMotor.setDirection(DcMotor.Direction.FORWARD);
+        if (BRMotor != null) BRMotor.setDirection(DcMotor.Direction.REVERSE);
 
-        BucketMotor0.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        BucketMotor1.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        if (BucketMotor0 != null) {
+            BucketMotor0.setDirection(DcMotor.Direction.REVERSE);
+            BucketMotor0.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+            BucketMotor0.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        }
+        if (BucketMotor1 != null) {
+            BucketMotor1.setDirection(DcMotor.Direction.FORWARD);
+            BucketMotor1.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+            BucketMotor1.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        }
 
-        FLMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-        FRMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-        BLMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-        BRMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        safeSetZeroPowerBehavior(FLMotor, DcMotor.ZeroPowerBehavior.BRAKE);
+        safeSetZeroPowerBehavior(FRMotor, DcMotor.ZeroPowerBehavior.BRAKE);
+        safeSetZeroPowerBehavior(BLMotor, DcMotor.ZeroPowerBehavior.BRAKE);
+        safeSetZeroPowerBehavior(BRMotor, DcMotor.ZeroPowerBehavior.BRAKE);
 
-        BucketMotor0.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-        BucketMotor1.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        if (clawServo != null) clawServo.setPosition(CLAW_MIN_POSITION);
+        if (clawRollServo != null) clawRollServo.setPosition(0.5);
+        if (clawPitchServo != null) clawPitchServo.setPosition(0.5);
+    }
 
-        // Servo Init
-        // Claw
-        clawServo = hwMap.get(Servo.class, "clawServo");
-        clawRollServo = hwMap.get(Servo.class, "clawRollServo");
-        clawPitchServo = hwMap.get(Servo.class, "clawPitchServo");
-        // Arm
-        ArmServo0 = hwMap.get(Servo.class, "ArmServo0");
-        ArmServo1 = hwMap.get(Servo.class, "ArmServo1");
-        ArmPitchServo0 = hwMap.get(Servo.class, "ArmPitchServo0");
-        ArmPitchServo1 = hwMap.get(Servo.class, "ArmPitchServo1");
+    private <T> T safeGetDevice(Class<? extends T> classOrInterface, String deviceName) {
+        try {
+            T device = hwMap.get(classOrInterface, deviceName);
+            if (device == null) {
+                hardwareError = true;
+                errorMessage.append("Device not found: ").append(deviceName).append("\n");
+            }
+            return device;
+        } catch (Exception e) {
+            hardwareError = true;
+            errorMessage.append("Exception getting ").append(deviceName)
+                    .append(": ").append(e.getMessage()).append("\n");
+            return null;
+        }
+    }
 
-        // Init positions
-        clawServo.setPosition(CLAW_MIN_POSITION);
-        clawRollServo.setPosition(0.5);
-        clawPitchServo.setPosition(0.5);
+    /** @noinspection SameParameterValue*/
+    private void safeSetZeroPowerBehavior(DcMotor motor, DcMotor.ZeroPowerBehavior behavior) {
+        if (motor != null) {
+            motor.setZeroPowerBehavior(behavior);
+        }
+    }
 
-        // Init powers
-        FLMotor.setPower(0);
-        FRMotor.setPower(0);
-        BLMotor.setPower(0);
-        BRMotor.setPower(0);
+    public boolean hasHardwareError() {
+        return hardwareError;
+    }
 
-        BucketMotor0.setPower(0);
-        BucketMotor1.setPower(0);
+    public String getErrorMessage() {
+        return errorMessage.toString();
+    }
+
+    public void reportStatusToTelemetry(org.firstinspires.ftc.robotcore.external.Telemetry telemetry) {
+        if (hardwareError) {
+            telemetry.addLine("Hardware Error Detected:");
+            telemetry.addLine(getErrorMessage());
+        } else {
+            telemetry.addLine("Hardware OK");
+        }
     }
 }

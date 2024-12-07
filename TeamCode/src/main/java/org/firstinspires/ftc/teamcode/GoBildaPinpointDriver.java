@@ -41,6 +41,7 @@ import java.nio.ByteOrder;
 import java.util.Arrays;
 
 
+/** @noinspection ALL*/
 @I2cDeviceType
 @DeviceProperties(
         name = "goBILDA® Pinpoint Odometry Computer",

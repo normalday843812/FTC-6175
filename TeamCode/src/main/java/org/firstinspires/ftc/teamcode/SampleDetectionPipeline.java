@@ -69,6 +69,7 @@ public class SampleDetectionPipeline extends OpenCvPipeline {
         this.colorPair = colorPair;
     }
 
+    /** @noinspection unused*/
     public SampleDetectionPipeline() {
         this(ColorPair.YELLOW_BLUE);
     }
@@ -304,6 +305,7 @@ public class SampleDetectionPipeline extends OpenCvPipeline {
     public boolean isLocked() { return isLocked; }
     public double getAngle() { return isLocked ? lockedAngle : smoothedAngle; }
     public String getColor() { return detectedColor; }
+    /** @noinspection unused*/
     public Point getCenter() { return objectCenter; }
     public double getArea() { return largestContourArea; }
 }

@@ -59,6 +59,7 @@ import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 
+/** @noinspection ALL*/
 @Config
 public final class TankDrive {
     public static class Params {
