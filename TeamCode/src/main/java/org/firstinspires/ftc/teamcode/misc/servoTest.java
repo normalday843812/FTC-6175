@@ -4,7 +4,7 @@ import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.Servo;
 
-@TeleOp(name="Servo Test", group="TeleOp")
+@TeleOp(name="Servo Test (must use servo configuration)", group="TeleOp")
 public class servoTest extends LinearOpMode {
     boolean previousDPadUpState = false;
     boolean previousDPadDownState = false;
@@ -13,7 +13,7 @@ public class servoTest extends LinearOpMode {
 
     @Override
     public void runOpMode() throws InterruptedException {
-        Servo clawServo = hardwareMap.get(Servo.class, "testServo");
+        Servo clawServo = hardwareMap.get(Servo.class, "servo0");
 
         waitForStart();
 

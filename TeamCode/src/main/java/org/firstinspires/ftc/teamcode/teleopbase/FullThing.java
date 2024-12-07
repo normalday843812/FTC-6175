@@ -5,7 +5,7 @@ import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 
 import java.util.*;
 
-@TeleOp(name="Full Thing", group="RUN?")
+@TeleOp(name="Final Teleop For Competition", group="RUN?")
 public class FullThing extends LinearOpMode {
     HardwareMapThing robot = new HardwareMapThing();
     private boolean isClawOpen = false;
