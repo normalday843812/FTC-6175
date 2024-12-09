@@ -22,8 +22,8 @@ public class HardwareMapThing {
     public Servo ArmServo1 = null;
     public Servo ArmPitchServo0 = null;
     public Servo ArmPitchServo1 = null;
-    public static final double CLAW_MIN_POSITION = 0.14;
-    public static final double CLAW_MAX_POSITION = 0.39;
+    public static final double CLAW_MIN_POSITION = 0.39;
+    public static final double CLAW_MAX_POSITION = 0.14;
     public static final double DEADZONE = 0.1;
     public static final double MAX_SERVO_SPEED = 1.0;
     public HardwareMap hwMap = null;

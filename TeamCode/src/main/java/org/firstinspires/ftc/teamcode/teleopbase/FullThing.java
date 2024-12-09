@@ -33,14 +33,14 @@ public class FullThing extends LinearOpMode {
         }
     }
 
-    private class Macro {
+    private static class Macro {
         List<MacroStep> steps;
         Macro(MacroStep... steps) {
             this.steps = Arrays.asList(steps);
         }
     }
 
-    private class MacroRunner {
+    private static class MacroRunner {
         private Macro currentMacro = null;
         private int currentStepIndex = 0;
         private long stepStartTime = 0;
@@ -80,77 +80,64 @@ public class FullThing extends LinearOpMode {
     }
 
     // --- Macros Definition ---
-    // Positions chosen arbitrarily; adjust as needed.
 
-    // 1. Move to Block macro
+    // "Go to sample" macro
     // Steps:
-    // - Extend arm (arm fully out)
-    // - Make pitch lower for arm (e.g., armPitchServoPosition = 0.0)
-    // - Make pitch higher for claw (clawPitchServoPos = 1.0)
-    // - Open claw
-    // - Go to idle
-    private Macro moveToBlockMacro = new Macro(
-            new MacroStep(500, () -> {
-                armServoPosition = 1.0; // Extend arm fully
-                applyArmPositions();
-            }),
-            new MacroStep(500, () -> {
-                armPitchServoPosition = 0.0; // Lower arm pitch
-                applyArmPositions();
-            }),
-            new MacroStep(500, () -> {
-                clawPitchServoPos = 1.0; // Make claw pitch higher
-                applyClawPositions();
-            }),
-            new MacroStep(250, () -> {
-                // Open claw
+    // 1. (100 ms): Open claw and set roll = 0.5
+    // 2. (1 s): Set pitch = 1.0, armPitch = 0.824, arm = 0.387
+    private final Macro moveToSampleMacro = new Macro(
+            new MacroStep(100, () -> {
+                // Step 1: Open claw and set roll
                 isClawOpen = true;
                 if (robot.clawServo != null) {
                     robot.clawServo.setPosition(HardwareMapThing.CLAW_MAX_POSITION);
                 }
+
+                // Set roll to 0.5
+                clawRollServoPos = 0.5;
+                if (robot.clawRollServo != null) robot.clawRollServo.setPosition(clawRollServoPos);
             }),
-            new MacroStep(250, () -> {
-                // Idle (no action needed, just pause)
+            new MacroStep(1000, () -> {
+                // Step 2: Set pitch, arm pitch, and arm
+                clawPitchServoPos = 1.0;
+                armPitchServoPosition = 0.824;
+                armServoPosition = 0.387;
+
+                applyArmPositions();
+                applyClawPositions();
             })
     );
 
-    // 2. Pickup Block macro
+    // "Pick up sample" macro
     // Steps:
-    // - Close claw
-    // - Make pitch lower for claw (clawPitchServoPos = 0.0)
-    // - Make pitch higher for arm (armPitchServoPosition = 1.0)
-    // - Retract arm (armServoPosition = 0.0)
-    // - Go to idle
-    private Macro pickupBlockMacro = new Macro(
+    // 1. (250 ms): Close claw
+    // 2. (500 ms): armPitch = 0.231, arm = 0.0, roll = 0.5, pitch = 0.588
+    private final Macro pickupSampleMacro = new Macro(
             new MacroStep(250, () -> {
-                // Close claw
+                // Step 1: Close claw
                 isClawOpen = false;
                 if (robot.clawServo != null) {
                     robot.clawServo.setPosition(HardwareMapThing.CLAW_MIN_POSITION);
                 }
             }),
             new MacroStep(500, () -> {
-                clawPitchServoPos = 0.0; // lower claw pitch
+                // Step 2: Set arm pitch, arm, roll, and pitch
+                armPitchServoPosition = 0.231;
+                armServoPosition = 0.0;
+                clawRollServoPos = 0.5;
+                clawPitchServoPos = 0.588;
+
+                applyArmPositions();
                 applyClawPositions();
-            }),
-            new MacroStep(500, () -> {
-                armPitchServoPosition = 1.0; // higher arm pitch
-                applyArmPositions();
-            }),
-            new MacroStep(500, () -> {
-                armServoPosition = 0.0; // retract arm
-                applyArmPositions();
-            }),
-            new MacroStep(250, () -> {
-                // Idle
             })
     );
 
-    // 3. Score Sample macro
+    // "Score sample" macro
     // Steps:
-    // - Just open claw (and then idle)
-    private Macro scoreSampleMacro = new Macro(
+    // 1. (250 ms): Open claw
+    private final Macro scoreSampleMacro = new Macro(
             new MacroStep(250, () -> {
+                // Step 1: Open claw
                 isClawOpen = true;
                 if (robot.clawServo != null) {
                     robot.clawServo.setPosition(HardwareMapThing.CLAW_MAX_POSITION);
@@ -198,12 +185,12 @@ public class FullThing extends LinearOpMode {
 
                     // Start macros based on button presses if no macro is currently running
                     if (gamepad2.y && !previousYState && !macroRunner.isRunning()) {
-                        // Start "move to block" macro
-                        macroRunner.startMacro(moveToBlockMacro);
+                        // Start "move to sample" macro
+                        macroRunner.startMacro(moveToSampleMacro);
                     }
                     if (gamepad2.b && !previousBState && !macroRunner.isRunning()) {
-                        // Start "pickup block" macro
-                        macroRunner.startMacro(pickupBlockMacro);
+                        // Start "pickup sample" macro
+                        macroRunner.startMacro(pickupSampleMacro);
                     }
                     if (gamepad2.x && !previousXState && !macroRunner.isRunning()) {
                         // Start "score sample" macro
@@ -232,29 +219,30 @@ public class FullThing extends LinearOpMode {
             return;
         }
 
-        double drive = -gamepad1.left_stick_y;
-        double strafe = gamepad1.left_stick_x;
-        double turn = gamepad1.right_stick_x;
+        double y = gamepad1.right_stick_y; // Remember, Y stick value is reversed
+        double x = gamepad1.right_stick_x * 1.1; // Counteract imperfect strafing
+        double rx = gamepad1.left_stick_x;
 
-        double leftFrontPower = drive + strafe + turn;
-        double rightFrontPower = drive - strafe - turn;
-        double leftBackPower = drive - strafe + turn;
-        double rightBackPower = drive + strafe - turn;
+        double denominator = Math.max(Math.abs(y) + Math.abs(x) + Math.abs(rx), 1);
+        double frontLeftPower = (y + x + rx) / denominator;
+        double backLeftPower = (y - x + rx) / denominator;
+        double frontRightPower = (y - x - rx) / denominator;
+        double backRightPower = (y + x - rx) / denominator;
 
-        double max = Math.max(Math.abs(leftFrontPower),
-                Math.max(Math.abs(rightFrontPower),
-                        Math.max(Math.abs(leftBackPower), Math.abs(rightBackPower))));
+        double max = Math.max(Math.abs(frontLeftPower),
+                Math.max(Math.abs(frontRightPower),
+                        Math.max(Math.abs(backLeftPower), Math.abs(backRightPower))));
         if (max > 1.0) {
-            leftFrontPower /= max;
-            rightFrontPower /= max;
-            leftBackPower /= max;
-            rightBackPower /= max;
+            frontLeftPower /= max;
+            frontRightPower /= max;
+            backLeftPower /= max;
+            backRightPower /= max;
         }
 
-        robot.FLMotor.setPower(leftFrontPower);
-        robot.FRMotor.setPower(rightFrontPower);
-        robot.BLMotor.setPower(leftBackPower);
-        robot.BRMotor.setPower(rightBackPower);
+        robot.FLMotor.setPower(frontLeftPower);
+        robot.FRMotor.setPower(frontRightPower);
+        robot.BLMotor.setPower(backLeftPower);
+        robot.BRMotor.setPower(backRightPower);
     }
 
     private void handleManualControls(double deltaTime) {
@@ -325,6 +313,7 @@ public class FullThing extends LinearOpMode {
         telemetry.addData("Pitch", "%.3f", clawPitchServoPos);
         telemetry.addData("ArmPitch", "%.3f", armPitchServoPosition);
         telemetry.addData("Arm", "%.3f", armServoPosition);
+
         telemetry.addData("Macro Running", macroRunner.isRunning());
     }
 
