@@ -1,4 +1,4 @@
-package org.firstinspires.ftc.teamcode;
+package org.firstinspires.ftc.teamcode.roadrunner;
 
 
 
@@ -16,7 +16,7 @@ import com.qualcomm.robotcore.hardware.HardwareMap;
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.Pose2D;
-import org.firstinspires.ftc.teamcode.messages.PoseMessage;
+import org.firstinspires.ftc.teamcode.roadrunner.messages.PoseMessage;
 
 /**
  * Experimental extension of MecanumDrive that uses the Gobilda Pinpoint sensor for localization.
@@ -42,7 +42,7 @@ public class PinpointDrive extends MecanumDrive {
          */
         //These are tuned for 3110-0002-0001 Product Insight #1
         // RR localizer note: These units are inches, presets are converted from mm (which is why they are inexact)
-        public double xOffset = -3.3071;
+        public double xOffset = -3.3071; //TODO: change this
         public double yOffset = -6.6142;
 
         /*
@@ -104,7 +104,7 @@ public class PinpointDrive extends MecanumDrive {
         This is recommended before you run your autonomous, as a bad initial calibration can cause
         an incorrect starting value for x, y, and heading.
          */
-        //pinpoint.recalibrateIMU();
+        pinpoint.recalibrateIMU(); //TODO: comment this out later ig?
         pinpoint.resetPosAndIMU();
         // wait for pinpoint to finish calibrating
         try {
