@@ -2,6 +2,7 @@ package org.firstinspires.ftc.teamcode.teleop;
 
 
 import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.Servo;
 
@@ -13,8 +14,8 @@ public class HardwareMapThing {
     public DcMotor FRMotor = null;
     public DcMotor BLMotor = null;
     public DcMotor BRMotor = null;
-    public DcMotor BucketMotor0 = null;
-    public DcMotor BucketMotor1 = null;
+    public DcMotorEx BucketMotor0 = null;
+    public DcMotorEx BucketMotor1 = null;
     public Servo clawServo = null;
     public Servo clawRollServo = null;
     public Servo clawPitchServo = null;
@@ -37,16 +38,16 @@ public class HardwareMapThing {
         FRMotor = safeGetDevice(DcMotor.class, "FRMotor");
         BLMotor = safeGetDevice(DcMotor.class, "BLMotor");
         BRMotor = safeGetDevice(DcMotor.class, "BRMotor");
-        BucketMotor0 = safeGetDevice(DcMotor.class, "BucketMotor0");
-        BucketMotor1 = safeGetDevice(DcMotor.class, "BucketMotor1");
+        BucketMotor0 = safeGetDevice(DcMotorEx.class, "VerticalSlideMotor0");
+        BucketMotor1 = safeGetDevice(DcMotorEx.class, "VerticalSlideMotor1");
 
         clawServo = safeGetDevice(Servo.class, "clawServo");
         clawRollServo = safeGetDevice(Servo.class, "clawRollServo");
         clawPitchServo = safeGetDevice(Servo.class, "clawPitchServo");
-        ArmServo0 = safeGetDevice(Servo.class, "ArmServo0");
-        ArmServo1 = safeGetDevice(Servo.class, "ArmServo1");
-        ArmPitchServo0 = safeGetDevice(Servo.class, "ArmPitchServo0");
-        ArmPitchServo1 = safeGetDevice(Servo.class, "ArmPitchServo1");
+        ArmServo0 = safeGetDevice(Servo.class, "armExtServo0");
+        ArmServo1 = safeGetDevice(Servo.class, "armExtServo1");
+        ArmPitchServo0 = safeGetDevice(Servo.class, "armPitchServo0");
+        ArmPitchServo1 = safeGetDevice(Servo.class, "armPitchServo1");
 
         if (!hardwareError) {
             configureMotorsAndServos();
@@ -61,13 +62,16 @@ public class HardwareMapThing {
 
         if (BucketMotor0 != null) {
             BucketMotor0.setDirection(DcMotor.Direction.REVERSE);
-            BucketMotor0.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
             BucketMotor0.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+            BucketMotor0.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+            BucketMotor0.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         }
+
         if (BucketMotor1 != null) {
             BucketMotor1.setDirection(DcMotor.Direction.FORWARD);
-            BucketMotor1.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
             BucketMotor1.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+            BucketMotor1.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+            BucketMotor1.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         }
 
         safeSetZeroPowerBehavior(FLMotor, DcMotor.ZeroPowerBehavior.BRAKE);

@@ -1,12 +1,15 @@
 package org.firstinspires.ftc.teamcode.teleop;
 
 import com.acmerobotics.dashboard.config.Config;
+import com.qualcomm.robotcore.hardware.DcMotorEx;
+import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.hardware.PIDFCoefficients;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 
 import java.util.*;
 @Config
-@TeleOp(name="Final Teleop For Competition", group="RUN?")
+@TeleOp(name="Final Teleop For Competition", group="Teleop")
 public class FullThing extends LinearOpMode {
     HardwareMapThing robot = new HardwareMapThing();
     private boolean isClawOpen = false;
@@ -20,13 +23,25 @@ public class FullThing extends LinearOpMode {
     private double clawPitchServoPos = 0.5;
     private double armServoPosition = 0.5;
     private double armPitchServoPosition = 0.5;
+    private boolean slowMode = false;
+    private boolean left_bumper_previous = false;
 
-    private static double testThing = 0;
+    // PIDF parameters for bucket motors, tunable via FTC Dashboard
+    public static double p = 50.0;
+    public static double i = 0.0;
+    public static double d = 0.0;
+    public static double f = 0.0;
 
-    private double bucketInput = 0;
+    // Target position for the bucket lift
+    private int bucketTargetPosition = 0;
 
-    // Deadzone and servo speed constants come from HardwareMapThing
-    // Assuming they are static fields in HardwareMapThing
+    // Convert old per-loop increments to per-second increments
+    // Originally: armServo += 0.00175 per loop (approx 50 loops/sec) => 0.00175*50 = 0.0875 per sec
+    private static final double ARM_EXTEND_SPEED_PER_SECOND = 0.4;
+
+    // We'll cast the bucket motors to DcMotorEx after init
+    private DcMotorEx bucketMotorEx0 = null;
+    private DcMotorEx bucketMotorEx1 = null;
 
     // --- Macro System Classes ---
     private static class MacroStep {
@@ -85,11 +100,7 @@ public class FullThing extends LinearOpMode {
     }
 
     // --- Macros Definition ---
-
     // "Go to sample" macro
-    // Steps:
-    // 1. (100 ms): Open claw and set roll = 0.5
-    // 2. (1 s): Set pitch = 1.0, armPitch = 0.824, arm = 0.387
     private final Macro moveToSampleMacro = new Macro(
             new MacroStep(100, () -> {
                 // Step 1: Open claw and set roll
@@ -114,9 +125,6 @@ public class FullThing extends LinearOpMode {
     );
 
     // "Pick up sample" macro
-    // Steps:
-    // 1. (250 ms): Close claw
-    // 2. (500 ms): armPitch = 0.231, arm = 0.0, roll = 0.5, pitch = 0.588
     private final Macro pickupSampleMacro = new Macro(
             new MacroStep(250, () -> {
                 // Step 1: Close claw
@@ -138,8 +146,6 @@ public class FullThing extends LinearOpMode {
     );
 
     // "Score sample" macro
-    // Steps:
-    // 1. (250 ms): Open claw
     private final Macro scoreSampleMacro = new Macro(
             new MacroStep(250, () -> {
                 // Step 1: Open claw
@@ -158,6 +164,26 @@ public class FullThing extends LinearOpMode {
             robot.init(hardwareMap);
         } catch (Exception e) {
             telemetry.addLine("Exception during init: " + e.getMessage());
+        }
+
+        // Cast the bucket motors to DcMotorEx, if available
+        if (robot.BucketMotor0 != null && robot.BucketMotor0 instanceof DcMotorEx) {
+            bucketMotorEx0 = (DcMotorEx) robot.BucketMotor0;
+        }
+        if (robot.BucketMotor1 != null && robot.BucketMotor1 instanceof DcMotorEx) {
+            bucketMotorEx1 = (DcMotorEx) robot.BucketMotor1;
+        }
+
+        // Set initial modes for the bucket motors
+        if (bucketMotorEx0 != null) {
+            bucketMotorEx0.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+            bucketMotorEx0.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+            bucketMotorEx0.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        }
+        if (bucketMotorEx1 != null) {
+            bucketMotorEx1.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+            bucketMotorEx1.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+            bucketMotorEx1.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         }
 
         robot.reportStatusToTelemetry(telemetry);
@@ -190,15 +216,12 @@ public class FullThing extends LinearOpMode {
 
                     // Start macros based on button presses if no macro is currently running
                     if (gamepad2.y && !previousYState && !macroRunner.isRunning()) {
-                        // Start "move to sample" macro
                         macroRunner.startMacro(moveToSampleMacro);
                     }
                     if (gamepad2.b && !previousBState && !macroRunner.isRunning()) {
-                        // Start "pickup sample" macro
                         macroRunner.startMacro(pickupSampleMacro);
                     }
                     if (gamepad2.x && !previousXState && !macroRunner.isRunning()) {
-                        // Start "score sample" macro
                         macroRunner.startMacro(scoreSampleMacro);
                     }
                 }
@@ -224,9 +247,14 @@ public class FullThing extends LinearOpMode {
             return;
         }
 
-        double y = gamepad1.right_stick_y; // Remember, Y stick value is reversed
-        double x = gamepad1.right_stick_x * 1.1; // Counteract imperfect strafing
-        double rx = gamepad1.left_stick_x;
+        double y = gamepad1.left_stick_y * (slowMode ? 1 : 0.25);
+        double x = gamepad1.left_stick_x * (slowMode ? 1 : 0.25) * 1.1; // Counteract imperfect strafing
+        double rx = gamepad1.right_stick_x * (slowMode ? 1 : 0.25);
+
+        if (gamepad1.left_bumper && !left_bumper_previous) {
+            slowMode = !slowMode;
+        }
+        left_bumper_previous = gamepad1.left_bumper;
 
         double denominator = Math.max(Math.abs(y) + Math.abs(x) + Math.abs(rx), 1);
         double frontLeftPower = (y + x + rx) / denominator;
@@ -267,7 +295,7 @@ public class FullThing extends LinearOpMode {
         clawRollServoPos = constrainServoPosition(clawRollServoPos + rollDelta);
         if (robot.clawRollServo != null) robot.clawRollServo.setPosition(clawRollServoPos);
 
-        double pitchInput = applyDeadzone(-gamepad2.left_stick_y);
+        double pitchInput = applyDeadzone(-gamepad2.right_stick_x);
         double pitchDelta = pitchInput * HardwareMapThing.MAX_SERVO_SPEED * deltaTime;
         clawPitchServoPos = constrainServoPosition(clawPitchServoPos + pitchDelta);
         if (robot.clawPitchServo != null) robot.clawPitchServo.setPosition(clawPitchServoPos);
@@ -278,19 +306,46 @@ public class FullThing extends LinearOpMode {
         double armPitchInputHigher = gamepad2.right_bumper ? 1 : 0;
         double armPitchInputLower = gamepad2.left_bumper ? 1 : 0;
 
-        armServoPosition += armInputHigher * 0.00175;
-        armServoPosition -= armInputLower * 0.00175;
+        // Now scale arm movements by deltaTime for consistent speed
+        armServoPosition += (armInputHigher - armInputLower) * ARM_EXTEND_SPEED_PER_SECOND * deltaTime;
         armServoPosition = Math.max(0.0, Math.min(1.0, armServoPosition));
 
-        armPitchServoPosition += armPitchInputHigher * 0.00175;
-        armPitchServoPosition -= armPitchInputLower * 0.00175;
+        armPitchServoPosition += (armPitchInputHigher - armPitchInputLower) * ARM_EXTEND_SPEED_PER_SECOND * deltaTime;
         armPitchServoPosition = Math.max(0.0, Math.min(1.0, armPitchServoPosition));
 
         applyArmPositions();
 
-        bucketInput = (gamepad2.dpad_up ? 1.0 : 0.0) - (gamepad2.dpad_down ? 1.0 : 0.0);
-        if (robot.BucketMotor1 != null) robot.BucketMotor1.setPower(bucketInput); else telemetry.addLine("BucketMotor1 not found!");
-        if (robot.BucketMotor0 != null) robot.BucketMotor0.setPower(bucketInput); else telemetry.addLine("BucketMotor0 not found!");
+        // Adjust the target position of the bucket
+        if (gamepad2.dpad_up) {
+            bucketTargetPosition = -10;
+        } else if (gamepad2.dpad_down) {
+            bucketTargetPosition = 10;
+        } else {
+            bucketTargetPosition = 0;
+        }
+
+        // Update PIDF coefficients from dashboard values and apply to motors
+        if (bucketMotorEx0 != null && bucketMotorEx1 != null) {
+            PIDFCoefficients velocityPIDF = new PIDFCoefficients(p, i, d, f);
+            bucketMotorEx0.setPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER, velocityPIDF);
+            bucketMotorEx1.setPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER, velocityPIDF);
+
+            // Set position P for RUN_TO_POSITION
+            bucketMotorEx0.setPositionPIDFCoefficients(p);
+            bucketMotorEx1.setPositionPIDFCoefficients(p);
+
+            // Move the bucket to the target using RUN_TO_POSITION
+            bucketMotorEx0.setTargetPosition(bucketTargetPosition);
+            bucketMotorEx1.setTargetPosition(bucketTargetPosition);
+
+            bucketMotorEx0.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+            bucketMotorEx1.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+
+            bucketMotorEx0.setPower(1.0);
+            bucketMotorEx1.setPower(1.0);
+        } else {
+            telemetry.addLine("Bucket motors not configured as DcMotorEx!");
+        }
     }
 
     private void applyArmPositions() {
@@ -313,16 +368,21 @@ public class FullThing extends LinearOpMode {
 
         telemetry.addData("Motors", "FL: %.2f, FR: %.2f, BL: %.2f, BR: %.2f",
                 flPower, frPower, blPower, brPower);
-        telemetry.addData("bucket", bucketInput);
-        telemetry.addData("dpaddown", (gamepad2.dpad_down ? 1.0 : 0.0));
+        telemetry.addData("bucket target", bucketTargetPosition);
+        if (robot.BucketMotor0 != null) telemetry.addData("bucket pos", robot.BucketMotor0.getCurrentPosition());
+        if (robot.BucketMotor1 != null) telemetry.addData("bucket pos2", robot.BucketMotor1.getCurrentPosition());
+        if (robot.BucketMotor0 != null) telemetry.addData("Target pos", robot.BucketMotor0.getTargetPosition());
+        if (robot.BucketMotor1 != null) telemetry.addData("Target pos2", robot.BucketMotor1.getTargetPosition());
 
         telemetry.addData("Claw", isClawOpen ? "open" : "closed");
-        telemetry.addData("Roll", "%.3f", clawRollServoPos);
+        telemetry.addData("tRoll", "%.3f", clawRollServoPos);
         telemetry.addData("Pitch", "%.3f", clawPitchServoPos);
+        telemetry.addData("SlowMode", slowMode ? "Enabled" : "Disabled");
         telemetry.addData("ArmPitch", "%.3f", armPitchServoPosition);
         telemetry.addData("Arm", "%.3f", armServoPosition);
 
         telemetry.addData("Macro Running", macroRunner.isRunning());
+        telemetry.addData("PIDF", "p:%.3f i:%.3f d:%.3f f:%.3f", p, i, d, f);
     }
 
     private double applyDeadzone(double input) {
