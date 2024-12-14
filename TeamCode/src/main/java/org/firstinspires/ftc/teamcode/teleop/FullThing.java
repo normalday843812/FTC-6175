@@ -17,6 +17,7 @@ public class FullThing extends LinearOpMode {
     private boolean previousYState = false;
     private boolean previousBState = false;
     private boolean previousXState = false;
+    private boolean previousDpadRightState = false;
 
     // Servo positions and initial values
     private double clawRollServoPos = 0.5;
@@ -103,56 +104,94 @@ public class FullThing extends LinearOpMode {
     // "Go to sample" macro
     private final Macro moveToSampleMacro = new Macro(
             new MacroStep(100, () -> {
-                // Step 1: Open claw and set roll
+                if (robot.clawServo != null) robot.clawServo.setPosition(HardwareMapThing.CLAW_MAX_POSITION);
+                if (robot.ArmPitchServo0 != null) robot.ArmPitchServo0.setPosition(0.824);
+                if (robot.ArmPitchServo1 != null) robot.ArmPitchServo1.setPosition(0.176); // 1.0 - 0.824
+                if (robot.clawPitchServo != null) robot.clawPitchServo.setPosition(0.4);
+                if (robot.clawRollServo != null) robot.clawRollServo.setPosition(0.5);
                 isClawOpen = true;
-                if (robot.clawServo != null) {
-                    robot.clawServo.setPosition(HardwareMapThing.CLAW_MAX_POSITION);
-                }
-
-                // Set roll to 0.5
-                clawRollServoPos = 0.5;
-                if (robot.clawRollServo != null) robot.clawRollServo.setPosition(clawRollServoPos);
             }),
             new MacroStep(1000, () -> {
-                // Step 2: Set pitch, arm pitch, and arm
-                clawPitchServoPos = 1.0;
-                armPitchServoPosition = 0.824;
-                armServoPosition = 0.387;
-
-                applyArmPositions();
-                applyClawPositions();
+                if (robot.ArmServo0 != null) robot.ArmServo0.setPosition(0.5);
+                if (robot.ArmServo1 != null) robot.ArmServo1.setPosition(0.5);
+                if (robot.clawRollServo != null) robot.clawRollServo.setPosition(0.76);
             })
     );
 
     // "Pick up sample" macro
     private final Macro pickupSampleMacro = new Macro(
-            new MacroStep(250, () -> {
-                // Step 1: Close claw
-                isClawOpen = false;
-                if (robot.clawServo != null) {
-                    robot.clawServo.setPosition(HardwareMapThing.CLAW_MIN_POSITION);
-                }
+            new MacroStep(100, () -> {
+                if (robot.ArmPitchServo0 != null) robot.ArmPitchServo0.setPosition(1.0);
+                if (robot.ArmPitchServo1 != null) robot.ArmPitchServo1.setPosition(0.0);
             }),
-            new MacroStep(500, () -> {
-                // Step 2: Set arm pitch, arm, roll, and pitch
-                armPitchServoPosition = 0.231;
-                armServoPosition = 0.0;
-                clawRollServoPos = 0.5;
-                clawPitchServoPos = 0.588;
-
-                applyArmPositions();
-                applyClawPositions();
+            new MacroStep(250, () -> {
+                if (robot.clawServo != null) robot.clawServo.setPosition(HardwareMapThing.CLAW_MIN_POSITION);
+                if (robot.ArmPitchServo0 != null) robot.ArmPitchServo0.setPosition(0.5);
+                if (robot.ArmPitchServo1 != null) robot.ArmPitchServo1.setPosition(0.5);
+                isClawOpen = false;
             })
     );
 
-    // "Score sample" macro
-    private final Macro scoreSampleMacro = new Macro(
-            new MacroStep(250, () -> {
-                // Step 1: Open claw
+    private final Macro moveToSpecimenMacro = new Macro(
+            new MacroStep(300, () -> {
+                if (robot.ArmServo0 != null) robot.ArmServo0.setPosition(1.0);
+                if (robot.ArmServo1 != null) robot.ArmServo1.setPosition(0.0);
+                if (robot.ArmPitchServo0 != null) robot.ArmPitchServo0.setPosition(0.1);
+                if (robot.ArmPitchServo1 != null) robot.ArmPitchServo1.setPosition(0.9);
+                if (robot.clawPitchServo != null) robot.clawPitchServo.setPosition(0.0);
+            }),
+            new MacroStep(400, () -> {
+                if (robot.clawRollServo != null) robot.clawRollServo.setPosition(0.4);
+            }),
+            new MacroStep(400, () -> {
+                if (robot.clawPitchServo != null) robot.clawPitchServo.setPosition(0.4);
+                if (robot.clawRollServo != null) robot.clawRollServo.setPosition(0.5);
+                if (robot.clawServo != null) robot.clawServo.setPosition(HardwareMapThing.CLAW_MAX_POSITION);
                 isClawOpen = true;
-                if (robot.clawServo != null) {
-                    robot.clawServo.setPosition(HardwareMapThing.CLAW_MAX_POSITION);
+            })
+    );
+
+    private final Macro pickupSpecimenMacro = new Macro(
+            new MacroStep(100, () -> {
+                if (robot.clawServo != null) robot.clawServo.setPosition(HardwareMapThing.CLAW_MIN_POSITION);
+                isClawOpen = false;
+            }),
+            new MacroStep(1000, () -> {
+                if (bucketMotorEx0 != null) {
+                    bucketMotorEx0.setTargetPosition(1000);
+                    bucketMotorEx0.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+                    bucketMotorEx0.setPower(1.0);
                 }
+                if (bucketMotorEx1 != null) {
+                    bucketMotorEx1.setTargetPosition(1000);
+                    bucketMotorEx1.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+                    bucketMotorEx1.setPower(1.0);
+                }
+            }),
+            new MacroStep(1000, () -> {
+                if (bucketMotorEx0 != null) {
+                    bucketMotorEx0.setTargetPosition(0);
+                    bucketMotorEx0.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+                    bucketMotorEx0.setPower(1.0);
+                }
+                if (bucketMotorEx1 != null) {
+                    bucketMotorEx1.setTargetPosition(0);
+                    bucketMotorEx1.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+                    bucketMotorEx1.setPower(1.0);
+                }
+            }),
+            new MacroStep(200, () -> {
+                if (robot.clawPitchServo != null) robot.clawPitchServo.setPosition(0.639);
+            }),
+            new MacroStep(200, () -> {
+                if (robot.clawRollServo != null) robot.clawRollServo.setPosition(1.0);
+            }),
+            new MacroStep(200, () -> {
+                if (robot.ArmPitchServo0 != null) robot.ArmPitchServo0.setPosition(0.55);
+                if (robot.ArmPitchServo1 != null) robot.ArmPitchServo1.setPosition(0.45);
+                if (robot.ArmServo0 != null) robot.ArmServo0.setPosition(0.7);
+                if (robot.ArmServo1 != null) robot.ArmServo1.setPosition(0.3);
+                if (robot.clawPitchServo != null) robot.clawPitchServo.setPosition(0.381);
             })
     );
 
@@ -214,21 +253,38 @@ public class FullThing extends LinearOpMode {
                 if (!macroRunner.isRunning()) {
                     handleManualControls(deltaTime);
 
-                    // Start macros based on button presses if no macro is currently running
+                    // Start macros based on button presses if no macro is running
+                    // Gamepad 2 Controls for Macros:
+                    // Y button: Move to sample position
                     if (gamepad2.y && !previousYState && !macroRunner.isRunning()) {
+                        telemetry.addLine("Starting moveToSample macro");
                         macroRunner.startMacro(moveToSampleMacro);
                     }
+
+                    // B button: Pick up sample
                     if (gamepad2.b && !previousBState && !macroRunner.isRunning()) {
+                        telemetry.addLine("Starting pickupSample macro");
                         macroRunner.startMacro(pickupSampleMacro);
                     }
+
+                    // X button: Move to specimen position
                     if (gamepad2.x && !previousXState && !macroRunner.isRunning()) {
-                        macroRunner.startMacro(scoreSampleMacro);
+                        telemetry.addLine("Starting moveToSpecimen macro");
+                        macroRunner.startMacro(moveToSpecimenMacro);
+                    }
+
+                    // DPAD right: Pick up specimen
+                    if (gamepad2.dpad_right && !previousDpadRightState && !macroRunner.isRunning()) {
+                        telemetry.addLine("Starting pickupSpecimen macro");
+                        macroRunner.startMacro(pickupSpecimenMacro);
                     }
                 }
 
+                // Update all button states
                 previousYState = gamepad2.y;
                 previousBState = gamepad2.b;
                 previousXState = gamepad2.x;
+                previousDpadRightState = gamepad2.dpad_right;
 
                 // Update the macro runner
                 macroRunner.update();
@@ -247,9 +303,9 @@ public class FullThing extends LinearOpMode {
             return;
         }
 
-        double y = gamepad1.left_stick_y * (slowMode ? 1 : 0.25);
-        double x = gamepad1.left_stick_x * (slowMode ? 1 : 0.25) * 1.1; // Counteract imperfect strafing
-        double rx = gamepad1.right_stick_x * (slowMode ? 1 : 0.25);
+        double y = gamepad1.left_stick_y * (slowMode ? 0.3 : 1);
+        double x = gamepad1.left_stick_x * (slowMode ? 0.3 : 1) * 1.1;
+        double rx = gamepad1.right_stick_x * (slowMode ? 0.3 : 1);
 
         if (gamepad1.left_bumper && !left_bumper_previous) {
             slowMode = !slowMode;

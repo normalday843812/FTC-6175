@@ -82,6 +82,7 @@ public class HardwareMapThing {
         if (clawServo != null) clawServo.setPosition(CLAW_MIN_POSITION);
         if (clawRollServo != null) clawRollServo.setPosition(0.5);
         if (clawPitchServo != null) clawPitchServo.setPosition(0.5);
+        if (ArmPitchServo0 != null) ArmPitchServo0.setDirection(Servo.Direction.REVERSE);
     }
 
     private <T> T safeGetDevice(Class<? extends T> classOrInterface, String deviceName) {
