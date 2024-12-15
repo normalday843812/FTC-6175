@@ -79,10 +79,15 @@ public class HardwareMapThing {
         safeSetZeroPowerBehavior(BLMotor, DcMotor.ZeroPowerBehavior.BRAKE);
         safeSetZeroPowerBehavior(BRMotor, DcMotor.ZeroPowerBehavior.BRAKE);
 
+        // Runs on initalization
         if (clawServo != null) clawServo.setPosition(CLAW_MIN_POSITION);
-        if (clawRollServo != null) clawRollServo.setPosition(0.5);
-        if (clawPitchServo != null) clawPitchServo.setPosition(0.5);
+        if (clawRollServo != null) clawRollServo.setPosition(0.767);
+        if (clawPitchServo != null) clawPitchServo.setPosition(0.414);
         if (ArmPitchServo0 != null) ArmPitchServo0.setDirection(Servo.Direction.REVERSE);
+        if (ArmPitchServo0 != null) ArmPitchServo0.setPosition(0.576);
+        if (ArmPitchServo1 != null) ArmPitchServo1.setPosition(1.0 - 0.576);
+        if (ArmServo0 != null) ArmServo0.setPosition(0.736);
+        if (ArmServo1 != null) ArmServo1.setPosition(1.0 - 0.736);
     }
 
     private <T> T safeGetDevice(Class<? extends T> classOrInterface, String deviceName) {
